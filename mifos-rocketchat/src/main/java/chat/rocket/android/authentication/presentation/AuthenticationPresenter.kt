@@ -1,5 +1,6 @@
 package chat.rocket.android.authentication.presentation
 
+import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import chat.rocket.android.analytics.AnalyticsManager
 import chat.rocket.android.analytics.event.AuthenticationEvent
@@ -73,6 +74,7 @@ class AuthenticationPresenter @Inject constructor(
     private lateinit var settings: PublicSettings
 
     var setupState: MutableLiveData<String> = MutableLiveData()
+    private val TAG = "RC-AuthenticationPr"
 
     // Used to notify the state of authentication process to the base application
     var message: String = ""
@@ -87,6 +89,7 @@ class AuthenticationPresenter @Inject constructor(
         this.roomName = roomName
         setupState.value = STATE_LOADING
         message = ""
+        Log.i(TAG, "setting connection parameters")
     }
 
     fun loadCredentials(callback: (isAuthenticated: Boolean) -> Unit) {
@@ -106,8 +109,10 @@ class AuthenticationPresenter @Inject constructor(
                     account?.userName == null
             ) {
                 callback(false)
+                Log.i(TAG, "Users not authenticated")
             } else {
                 callback(true)
+                Log.i(TAG, "Users already authenticated")
             }
         }
     }
@@ -116,12 +121,13 @@ class AuthenticationPresenter @Inject constructor(
         if (!currentServer.isValidUrl()) {
             setupState.value = STATE_ERROR
             message = INVALID_SERVER_URL
+            Log.i(TAG, "Server details invalid")
         } else {
             setupState.value = STATE_LOADING
             setupConnectionInfo(currentServer)
+            Log.i(TAG, "Server valid")
             launchUI(strategy) {
-                val result = checkServerInfoSuspended(currentServer)
-		connect()
+		        connect()
             }
         }
     }
@@ -164,6 +170,7 @@ class AuthenticationPresenter @Inject constructor(
                 } catch (ex: Exception) {
                     setupState.value = STATE_ERROR
                     message = ex.message.toString()
+                    Log.e(TAG, "Cannot connect to server ${ex.message}")
                 }
             }
         }
@@ -207,6 +214,7 @@ class AuthenticationPresenter @Inject constructor(
                 }
             } catch (exception: RocketChatException) {
                 exception.message?.let {
+                    Log.e(TAG, "Authentication with credentials error : $it")
                     if (it == "Unauthorized") {
                         signup(name,
                                 userName,
@@ -218,6 +226,7 @@ class AuthenticationPresenter @Inject constructor(
                     }
                 }.ifNull {
                     setupState.value = STATE_ERROR
+                    Log.e(TAG, "Authentication with credentials error ?")
                     message = "Generic Error Message"
                 }
             }
@@ -298,7 +307,8 @@ class AuthenticationPresenter @Inject constructor(
     private fun getDbManager() {
         dbManagerFactory?.create(currentServer)?.let {
             dbManager = it
-        }
+            Log.e(TAG, "DB initialized")
+        } ?: Log.e(TAG, "Error in DB initialization")
     }
 
     fun toChatRoom() {
@@ -315,7 +325,7 @@ class AuthenticationPresenter @Inject constructor(
                     setupState.value = STATE_ERROR
                     message = "Error refreshing channels"
                 }
-                Timber.e(ex, "Error refreshing channels")
+                Log.e(TAG, "Chat rooms error ${ex.message}")
             }
         }
     }
@@ -346,7 +356,7 @@ class AuthenticationPresenter @Inject constructor(
             } catch (ex: Exception) {
                 setupState.value = STATE_ERROR
                 message = "Generic Error Message"
-                Timber.e(ex, "Error loading channel")
+                Timber.e(ex, "Error loading channel + ${ex.message}")
             }
         }
     }
@@ -374,12 +384,13 @@ class AuthenticationPresenter @Inject constructor(
                 if (room != null) {
                     loadChatRoom(room.chatRoom, true)
                     message = "Room found!"
+                    Timber.d("Channel Load Successful")
                 } else {
                     message = "Room Not found"
-                    Timber.e("Error loading channel")
+                    Timber.d("Error loading channel")
                 }
             } catch (ex: Exception) {
-                Timber.e(ex, "Error loading channel")
+                Log.e(TAG, "load chat rooms error ${ex.message}")
             }
         }
     }
