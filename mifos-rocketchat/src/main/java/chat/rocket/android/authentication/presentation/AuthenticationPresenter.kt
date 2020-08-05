@@ -121,12 +121,7 @@ class AuthenticationPresenter @Inject constructor(
             setupConnectionInfo(currentServer)
             launchUI(strategy) {
                 val result = checkServerInfoSuspended(currentServer)
-                if (!result) {
-                    setupState.value = STATE_ERROR
-                    message = "Error getting server info"
-                } else {
-                    connect()
-                }
+		connect()
             }
         }
     }
