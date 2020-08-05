@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import chat.rocket.android.authentication.presentation.AuthenticationPresenter
 import chat.rocket.android.authentication.presentation.RocketChatView
 import chat.rocket.android.dagger.DaggerRocketComponent
+import timber.log.Timber
 
 class RocketChat<T> constructor(activity: T,
                                 protocol: String,
@@ -63,8 +64,10 @@ class RocketChat<T> constructor(activity: T,
         presenter.loadCredentials { isAuthenticated ->
             if (isAuthenticated) {
                 showChatRoom()
+                Timber.d("User already authenticated")
             } else {
                 connectToServer()
+                Timber.d("User needs to be authenticated")
             }
         }
     }
@@ -83,6 +86,13 @@ class RocketChat<T> constructor(activity: T,
 
     private fun connectToServer() {
         presenter.checkServer()
+    }
+
+    /**
+     * Used to give details of authentication process to the base application
+     */
+    fun getMessage(): String {
+        return presenter.message
     }
 
     private fun showChatRoom() = presenter.toChatRoom()

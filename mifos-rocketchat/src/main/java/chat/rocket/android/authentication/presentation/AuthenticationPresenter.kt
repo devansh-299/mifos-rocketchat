@@ -73,6 +73,8 @@ class AuthenticationPresenter @Inject constructor(
     private lateinit var settings: PublicSettings
 
     var setupState: MutableLiveData<String> = MutableLiveData()
+
+    // Used to notify the state of authentication process to the base application
     var message: String = ""
 
     fun setConnectionParams(protocol: String, serverDomain: String, name: String, userName: String,
@@ -376,13 +378,13 @@ class AuthenticationPresenter @Inject constructor(
                 val room = dbManager.getRoomByName(roomName)
                 if (room != null) {
                     loadChatRoom(room.chatRoom, true)
+                    message = "Room found!"
                 } else {
-
+                    message = "Room Not found"
                     Timber.e("Error loading channel")
                 }
             } catch (ex: Exception) {
                 Timber.e(ex, "Error loading channel")
-//                view.showGenericErrorMessage()
             }
         }
     }
